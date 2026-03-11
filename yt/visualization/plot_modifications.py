@@ -2570,6 +2570,9 @@ class TimestampCallback(PlotCallback):
         Whether or not to show the ds.current_time of the data output.  Can
         be used solo or in conjunction with the time parameter.
 
+    scale_factor : boolean, optional
+        Whether or not to show the ds.scale_fator of the data output.
+
     time_format : string, optional
         This specifies the format of the time output assuming "time" is the
         number of time and "unit" is units of the time (e.g. 's', 'Myr', etc.)
@@ -2586,6 +2589,10 @@ class TimestampCallback(PlotCallback):
         be specified to arbitrary precision according to printf formatting
         codes (defaults to 0.2f -- a float with 2 digits after decimal).
         Example: "REDSHIFT = {redshift:03.3g}",
+
+    scale_factor_format : string, optional
+        This specifies the format of the scale factor output.
+        (defaults to 0.3f -- a float with 3 digits after decimal).
 
     draw_inset_box : boolean, optional
         Whether or not an inset box should be included around the text
@@ -2644,9 +2651,11 @@ class TimestampCallback(PlotCallback):
         *,
         time=True,
         redshift=False,
+        scale_factor=False,
         time_format="t = {time:.1f} {units}",
         time_unit=None,
         redshift_format="z = {redshift:.2f}",
+        scale_factor_format="a = {a:.3f}",
         draw_inset_box=False,
         coord_system="axis",
         time_offset=None,
@@ -2658,8 +2667,10 @@ class TimestampCallback(PlotCallback):
         self.corner = corner
         self.time = time
         self.redshift = redshift
+        self.scale_factor = scale_factor
         self.time_format = time_format
         self.redshift_format = redshift_format
+        self.scale_factor_format = scale_factor_format
         self.time_unit = time_unit
         self.coord_system = coord_system
         self.time_offset = time_offset
@@ -2765,6 +2776,21 @@ class TimestampCallback(PlotCallback):
             # negative null redshifts (e.g., "-0.00").
             self.text += self.redshift_format.format(redshift=float(z))
             self.text = re.sub("-(0.0*)$", r"\g<1>", self.text)
+
+        # If we're annotating the scale factor
+        if self.scale_factor and not hasattr(plot.data.ds, "scale_factor"):
+            warnings.warn(
+                f"dataset {plot.data.ds} does not have scale_factor attribute. "
+                "Set scale_factor=False to silence this warning.",
+                stacklevel=2,
+            )
+            self.scale_factor = False
+
+        if self.scale_factor:
+            a = plot.data.ds.scale_factor
+            if self.time or self.redshift:
+                self.text += "\n"
+            self.text += self.scale_factor_format.format(a=float(a))
 
         # This is just a fancy wrapper around the TextLabelCallback
         tcb = TextLabelCallback(
