@@ -261,21 +261,27 @@ class IOHandlerRAMSES(BaseIOHandler):
 
             if ptype == "sink_csv":
                 subset = chunks[0].objs[0]
-                rv = self._read_particle_subset(subset, fields)
-                for ptype, field_list in sorted(ptf.items()):
-                    x, y, z = (np.asarray(rv[ptype, pn % ax], "=f8") for ax in "xyz")
-                    mask = selector.select_points(x, y, z, 0.0)
-                    if mask is None:
-                        mask = []
-                    for field in field_list:
-                        data = np.asarray(rv.pop((ptype, field))[mask], "=f8")
-                        yield (ptype, field), data
+                sink_fields = [(ptype, f) for f in field_list]
+                for ax in "xyz":
+                    if (ptype, pn % ax) not in sink_fields:
+                        sink_fields.append((ptype, pn % ax))
+                rv = self._read_particle_subset(subset, sink_fields)
+                x, y, z = (np.asarray(rv[ptype, pn % ax], "=f8") for ax in "xyz")
+                mask = selector.select_points(x, y, z, 0.0)
+                if mask is None:
+                    mask = []
+                for field in field_list:
+                    data = np.asarray(rv.pop((ptype, field))[mask], "=f8")
+                    yield (ptype, field), data
 
             else:
+                non_sink_fields = [f for f in fields if f[0] != "sink_csv"]
                 for chunk in chunks:
                     for subset in chunk.objs:
-                        rv = self._read_particle_subset(subset, fields)
+                        rv = self._read_particle_subset(subset, non_sink_fields)
                         for ptype, field_list in sorted(ptf.items()):
+                            if ptype == "sink_csv":
+                                continue
                             x, y, z = (
                                 np.asarray(rv[ptype, pn % ax], "=f8") for ax in "xyz"
                             )
