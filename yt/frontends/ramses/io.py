@@ -394,6 +394,8 @@ def _read_part_csv_file_descriptor(fname: Union[str, "os.PathLike[str]"]):
         "lz": "particle_angular_momentum_z",
         "tform": "particle_formation_time",
         "acc_rate": "particle_accretion_rate",
+        "dMsink_overdt": "particle_sink_accretion_rate",
+        "dMsmbh_overdt": "particle_smbh_accretion_rate",
         "del_mass": "particle_delta_mass",
         "rho_gas": "particle_rho_gas",
         "cs**2": "particle_sound_speed",
